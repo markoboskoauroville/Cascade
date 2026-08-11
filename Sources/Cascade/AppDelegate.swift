@@ -19,8 +19,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             string: AppDelegate.letter,
             attributes: [.font: NSFont.monospacedSystemFont(ofSize: 13, weight: .bold),
                          .foregroundColor: AppDelegate.letterColor])
-        item.button?.toolTip = "Cascade the windows on this screen.\n"
-            + "Only the screen the pointer is on is touched."
+        item.button?.toolTip = """
+            Click to cascade the windows on this screen.
+            Click again to put them back exactly as they were.
+            Option click to re-cascade without restoring first.
+            Only the screen the pointer is on is touched.
+            """
         item.button?.target = self
         item.button?.action = #selector(buttonClicked)
         item.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
@@ -35,12 +39,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let event = NSApp.currentEvent
         let wantsMenu = event?.type == .rightMouseUp
             || event?.modifierFlags.contains(.control) == true
-        if wantsMenu { showMenu() } else { arrange() }
+        if wantsMenu {
+            showMenu()
+        } else {
+            // Option forces a fresh cascade. Without it the click alternates,
+            // so re-cascading after moving a couple of windows by hand would
+            // otherwise mean restoring first and clicking twice more.
+            act(forceCascade: event?.modifierFlags.contains(.option) == true)
+        }
     }
 
-    private func arrange() {
-        switch Arranger.arrangeScreenUnderPointer() {
-        case .arranged:
+    private func act(forceCascade: Bool = false) {
+        switch Arranger.toggleScreenUnderPointer(forceCascade: forceCascade) {
+        case .cascaded, .restored:
             break                      // the windows moving is the feedback
         case .nothingToArrange:
             NSSound.beep()
@@ -77,10 +88,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func showMenu() {
         let menu = NSMenu()
+        // Without this AppKit re-enables every item that has a valid target and
+        // action, which would silently undo the disabled state below.
+        menu.autoenablesItems = false
 
-        let arrangeItem = menu.addItem(withTitle: "Cascade this screen",
-                                       action: #selector(menuArrange), keyEquivalent: "")
-        arrangeItem.target = self
+        let canRestore = Arranger.canRestoreScreenUnderPointer()
+
+        let cascadeItem = menu.addItem(withTitle: "Cascade this screen",
+                                       action: #selector(menuCascade), keyEquivalent: "")
+        cascadeItem.target = self
+
+        let restoreItem = menu.addItem(withTitle: "Put this screen back",
+                                       action: #selector(menuRestore), keyEquivalent: "")
+        restoreItem.target = self
+        restoreItem.isEnabled = canRestore
 
         menu.addItem(.separator())
 
@@ -106,7 +127,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem.menu = nil
     }
 
-    @objc private func menuArrange() { arrange() }
+    @objc private func menuCascade() { act(forceCascade: true) }
+    @objc private func menuRestore() { act() }
     @objc private func menuTrust() { promptForTrust() }
     @objc private func menuQuit() { NSApp.terminate(nil) }
     @objc private func menuLogin() { LoginItem.set(enabled: !LoginItem.isEnabled) }
@@ -118,6 +140,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .credits: NSAttributedString(
                 string: "Splits the screen you are pointing at in two and cascades "
                       + "its windows so every title bar stays reachable.\n"
+                      + "Click again to put your own arrangement back.\n"
                       + "Made to pair with AutoRaise.",
                 attributes: [.font: NSFont.systemFont(ofSize: 11)])
         ])

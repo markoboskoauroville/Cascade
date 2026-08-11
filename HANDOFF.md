@@ -57,6 +57,33 @@ just clicked, so this satisfies both "the screen the mouse is on" and "the
 screen whose button I pressed" with one rule. A window belongs to the screen its
 **centre** is on; using a corner would claim windows that merely overlap an edge.
 
+## Undo
+
+`Snapshots` keeps one array of `WindowSnapshot` per `CGDirectDisplayID`. Per
+display on purpose: cascading one screen must not discard the way back on the
+other.
+
+The button alternates. `toggleScreenUnderPointer` restores when a snapshot
+exists, otherwise cascades. `take` hands the snapshot back and forgets it in the
+same call, which is what makes the alternation self-correcting. Option click, or
+the Cascade menu item, passes `forceCascade` to skip the restore branch.
+
+**The snapshot is taken before anything moves.** Reading frames after the first
+`setFrame` would capture the cascade itself and undo would become a no-op. This
+is the one ordering mistake that silently destroys the feature.
+
+Stacking is recorded through `CGWindowListCopyWindowInfo`, matched to AX windows
+on owner pid plus bounds within 2pt. Best effort: a failed match costs stacking
+accuracy for that window only, and needs no extra permission, because bounds and
+pid are readable without Screen Recording while window titles are not. Restore
+raises back to front so the previously frontmost window ends up frontmost.
+
+Windows closed since the snapshot are filtered out by `stillExists` rather than
+treated as an error. Windows opened since are untouched.
+
+`menu.autoenablesItems = false` is required, or AppKit re-enables the Put this
+screen back item whenever it has a valid target.
+
 ## Inherited traps, already applied
 
 - `Package.swift` is **swift-tools-version 5.9. Do not raise it.**
@@ -73,4 +100,4 @@ screen whose button I pressed" with one rule. A window belongs to the screen its
   `C` FKeys shows when F1-F12 are in media mode. One constant,
   `AppDelegate.letter`.
 - No hotkey. Click only, as specified.
-- No undo. Previous frames are not recorded.
+- Restore does not survive quitting Cascade. Snapshots are in memory only.

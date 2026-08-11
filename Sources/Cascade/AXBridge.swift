@@ -5,6 +5,7 @@ import ApplicationServices
 /// Accessibility API.
 struct ManagedWindow {
     let element: AXUIElement
+    let pid: pid_t
     let appName: String
     let frame: CGRect          // in AX coordinates: origin top left, y grows downward
 }
@@ -63,6 +64,7 @@ enum AXBridge {
                 guard isArrangeable(window), let frame = frame(of: window) else { continue }
                 guard frame.width > 80, frame.height > 80 else { continue }
                 result.append(ManagedWindow(element: window,
+                                            pid: app.processIdentifier,
                                             appName: app.localizedName ?? "",
                                             frame: frame))
             }
@@ -136,5 +138,53 @@ enum AXBridge {
 
     static func raise(_ window: AXUIElement) {
         AXUIElementPerformAction(window, kAXRaiseAction as CFString)
+    }
+
+    /// True when the window still exists and answers. Used before restoring, so
+    /// a window closed since the snapshot is skipped rather than causing a
+    /// pointless round trip to a dead process.
+    static func stillExists(_ window: AXUIElement) -> Bool {
+        frame(of: window) != nil
+    }
+
+    // MARK: - Stacking order
+    //
+    // The Accessibility API gives windows grouped by application, which says
+    // nothing about what is in front of what across apps. CGWindowList does
+    // give true front to back order, so it is used to record stacking at
+    // snapshot time. It reports bounds in the same top left origin space as AX,
+    // so the two can be matched directly on owner pid plus bounds.
+    //
+    // Best effort by design: window titles would need Screen Recording
+    // permission, but bounds and owner pid do not, so nothing here adds a
+    // permission prompt. If a match fails the window simply gets no rank and
+    // keeps whatever stacking it ends up with.
+
+    static func frontToBackOrder() -> [(pid: pid_t, bounds: CGRect)] {
+        let options: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
+        guard let list = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]]
+        else { return [] }
+
+        return list.compactMap { info in
+            guard let pid = info[kCGWindowOwnerPID as String] as? pid_t,
+                  let layer = info[kCGWindowLayer as String] as? Int, layer == 0,
+                  let bounds = info[kCGWindowBounds as String] as? [String: CGFloat],
+                  let x = bounds["X"], let y = bounds["Y"],
+                  let w = bounds["Width"], let h = bounds["Height"]
+            else { return nil }
+            return (pid, CGRect(x: x, y: y, width: w, height: h))
+        }
+    }
+
+    /// Index of a window in the front to back list, or nil when no match.
+    static func stackRank(pid: pid_t, frame: CGRect,
+                          in order: [(pid: pid_t, bounds: CGRect)]) -> Int? {
+        order.firstIndex { entry in
+            entry.pid == pid
+                && abs(entry.bounds.minX - frame.minX) < 2
+                && abs(entry.bounds.minY - frame.minY) < 2
+                && abs(entry.bounds.width - frame.width) < 2
+                && abs(entry.bounds.height - frame.height) < 2
+        }
     }
 }

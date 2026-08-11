@@ -12,6 +12,17 @@ That strip is the whole idea. With AutoRaise running, moving the pointer onto an
 exposed sliver brings that window forward. Two displays become four working
 zones you can reach without a single click.
 
+**Click again and everything goes back exactly where you had it.** Cascade
+records every window's position, size and stacking order before it moves
+anything, so your own arrangement is never lost. The button alternates: cascade,
+restore, cascade, restore.
+
+Option click re-cascades without restoring first, for when you have nudged a
+couple of windows by hand and just want the layout tidied again.
+
+Each display remembers its own arrangement separately, so cascading the laptop
+screen never costs you the way back on the external one.
+
 Only the screen the pointer is on is touched. The other display is left exactly
 as it was.
 
@@ -46,6 +57,8 @@ identical to a working one.
   stay on the side you had them on.
 - Skipped: minimised windows, full screen windows, palettes and panels, and any
   window whose app refuses to be moved or resized.
+- Restoring skips windows closed since the cascade, and leaves windows opened
+  since alone, because they were never Cascade's to move.
 
 ## Build from source
 
