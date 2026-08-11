@@ -7,7 +7,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var statusItem: NSStatusItem!
     private static let letterColor = NSColor.white
-    private static let letter = "C"
+    /// Two letters, not one, so it cannot be mistaken for the C that FKeys
+    /// shows when F1-F12 are in media mode.
+    private static let letter = "CA"
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)

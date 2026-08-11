@@ -69,7 +69,8 @@ screen whose button I pressed" with one rule. A window belongs to the screen its
 
 ## Open
 
-- Menu bar letter is `C`, which collides with FKeys showing `C` for media mode.
-  One constant, `AppDelegate.letter`.
+- Menu bar label is `CA`, two letters on purpose: a single `C` collided with the
+  `C` FKeys shows when F1-F12 are in media mode. One constant,
+  `AppDelegate.letter`.
 - No hotkey. Click only, as specified.
 - No undo. Previous frames are not recorded.

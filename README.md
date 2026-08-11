@@ -3,7 +3,7 @@
 One click cascades every window on the screen you are pointing at. Built to pair
 with [AutoRaise](https://github.com/dimentium/AutoRaise).
 
-Click the **C** in the menu bar. The screen under the pointer is split down the
+Click **CA** in the menu bar. The screen under the pointer is split down the
 middle, its windows are dealt out between the two halves, and each half is
 cascaded down and to the right so that **every window keeps a strip of its title
 bar exposed**.
