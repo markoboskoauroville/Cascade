@@ -1,0 +1,8 @@
+.DS_Store
+.build/
+.swiftpm/
+DerivedData/
+packaging/Cascade.app/
+packaging/*.icns
+packaging/Cascade.iconset/
+packaging/*.zip
