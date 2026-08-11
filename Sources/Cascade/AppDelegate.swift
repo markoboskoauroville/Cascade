@@ -20,10 +20,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             attributes: [.font: NSFont.monospacedSystemFont(ofSize: 13, weight: .bold),
                          .foregroundColor: AppDelegate.letterColor])
         item.button?.toolTip = """
-            Click to cascade the windows on this screen.
-            Click again to put them back exactly as they were.
-            Option click to re-cascade without restoring first.
-            Only the screen the pointer is on is touched.
+            Cascade — window arranger
+            Splits the screen you are pointing at down the middle and cascades \
+            its windows so every title bar stays reachable. Pairs with AutoRaise.
+            Click to cascade this screen. Click again to put it back exactly \
+            as it was.
+            Shortcut: none. Option click re-cascades without restoring first.
+            Only the screen under the pointer is touched.
             """
         item.button?.target = self
         item.button?.action = #selector(buttonClicked)
