@@ -1,3 +1,5 @@
+### [Download the latest build](https://github.com/markoboskoauroville/Cascade/releases/latest)
+
 # Cascade
 
 One click cascades every window on the screen you are pointing at. Built to pair
